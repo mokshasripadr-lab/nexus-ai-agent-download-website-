@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nexus CLI — the autonomous agent for your terminal</title>
+<meta name="description" content="Nexus CLI is a Claude Code-style terminal agent. Pick a top-tier model, chat, run autonomous multi-step tasks, and schedule cron jobs — installed with one command." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#1c1b19; --bg-2:#211f1d; --surface:#26241f; --card:#2b2825;
+    --border:#38342f; --border-hi:#4a453e;
+    --text-1:#f3efe7; --text-2:#c7c0b4; --text-3:#8f887c;
+    --accent:#d97757; --accent-2:#e0916f; --accent-dim:rgba(217,119,87,.14);
+    --gold:#e6b95c; --mint:#7fc9ad; --violet:#a892e0; --blue:#7aa2e3;
+    --serif:'Fraunces',Georgia,serif; --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text-1);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+  .serif{font-family:var(--serif)}
+  .accent{color:var(--accent)}
+
+  /* soft grain / glow backdrop */
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(700px 400px at 80% -5%, rgba(217,119,87,.10), transparent 60%),
+      radial-gradient(600px 500px at 5% 20%, rgba(168,146,224,.06), transparent 60%);}
+
+  /* NAV */
+  nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:rgba(28,27,25,.72);border-bottom:1px solid var(--border)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px}
+  .logo{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--gold));
+    display:flex;align-items:center;justify-content:center;color:#1c1b19;font-weight:800;font-size:14px;font-family:var(--serif)}
+  .nav-links{display:flex;gap:26px;align-items:center;font-size:14px;color:var(--text-2)}
+  .nav-links a:hover{color:var(--text-1)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 18px;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer;border:1px solid transparent;transition:.15s}
+  .btn-primary{background:var(--accent);color:#1c1b19}
+  .btn-primary:hover{background:var(--accent-2);transform:translateY(-1px)}
+  .btn-ghost{border-color:var(--border-hi);color:var(--text-1)}
+  .btn-ghost:hover{background:var(--surface)}
+  @media(max-width:720px){.nav-links a:not(.btn){display:none}}
+
+  /* HERO */
+  header{padding:90px 0 60px;text-align:center;position:relative}
+  .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;
+    background:var(--accent-dim);border:1px solid rgba(217,119,87,.3);color:var(--accent-2);
+    font-size:12.5px;font-weight:600;margin-bottom:26px}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(217,119,87,.5)}70%{box-shadow:0 0 0 8px rgba(217,119,87,0)}100%{box-shadow:0 0 0 0 rgba(217,119,87,0)}}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(40px,6.5vw,74px);line-height:1.03;letter-spacing:-.02em}
+  h1 em{font-style:italic;color:var(--accent)}
+  .sub{max-width:620px;margin:22px auto 0;font-size:clamp(16px,2vw,19px);color:var(--text-2)}
+  .cta-row{display:flex;gap:12px;justify-content:center;margin-top:34px;flex-wrap:wrap}
+
+  /* install box */
+  .install{max-width:680px;margin:44px auto 0}
+  .tabs{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+  .tab{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:600;color:var(--text-3);cursor:pointer;border:1px solid transparent}
+  .tab.on{color:var(--text-1);background:var(--surface);border-color:var(--border)}
+  .code{display:flex;align-items:center;justify-content:space-between;gap:14px;
+    background:#151412;border:1px solid var(--border);border-radius:14px;padding:16px 18px;text-align:left}
+  .code code{font-family:var(--mono);font-size:13.5px;color:var(--mint);overflow-x:auto;white-space:nowrap}
+  .copy{flex-shrink:0;background:var(--surface);border:1px solid var(--border-hi);color:var(--text-2);
+    padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:.15s}
+  .copy:hover{color:var(--text-1);border-color:var(--accent)}
+  .hint{font-size:12.5px;color:var(--text-3);margin-top:12px}
+
+  /* mascot terminal */
+  .term{max-width:720px;margin:56px auto 0;background:#151412;border:1px solid var(--border);
+    border-radius:16px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.6);text-align:left}
+  .term-bar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--border);background:#1a1917}
+  .term-bar i{width:11px;height:11px;border-radius:50%;display:block}
+  .term-body{padding:20px 22px;font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--text-2)}
+  .term-body .c-orange{color:var(--accent-2)} .term-body .c-grey{color:var(--text-3)}
+  .term-body .c-mint{color:var(--mint)} .term-body .c-gold{color:var(--gold)} .term-body .c-vio{color:var(--violet)}
+
+  /* SECTIONS */
+  section{padding:70px 0}
+  .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);text-align:center}
+  .h2{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4vw,42px);text-align:center;margin:10px 0 8px;letter-spacing:-.01em}
+  .lead{text-align:center;color:var(--text-2);max-width:600px;margin:0 auto 44px;font-size:16px}
+
+  .grid{display:grid;gap:18px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g3,.g2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px;transition:.2s}
+  .card:hover{border-color:var(--border-hi);transform:translateY(-3px)}
+  .ic{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
+  .card h3{font-size:17px;margin-bottom:7px;font-weight:600}
+  .card p{font-size:14px;color:var(--text-2)}
+  .tag{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-top:12px;display:block}
+
+  /* engines strip */
+  .eng{display:flex;gap:14px;align-items:flex-start;padding:22px;border-radius:14px;background:var(--bg-2);border:1px solid var(--border)}
+  .eng .k{font-family:var(--serif);font-size:26px;font-weight:600;line-height:1;min-width:34px}
+  .eng h4{font-size:16px;margin-bottom:3px} .eng p{font-size:13.5px;color:var(--text-2)}
+
+  /* steps */
+  .step{display:flex;gap:18px;align-items:flex-start;margin-bottom:26px}
+  .num{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:var(--accent-dim);border:1px solid rgba(217,119,87,.35);
+    color:var(--accent-2);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .step h4{font-size:16px;margin-bottom:3px} .step p{font-size:14px;color:var(--text-2)}
+  .step code{font-family:var(--mono);font-size:12.5px;background:#151412;border:1px solid var(--border);padding:2px 7px;border-radius:6px;color:var(--mint)}
+
+  /* roadmap / coming soon */
+  .road{position:relative}
+  .soon{background:linear-gradient(160deg,var(--card),var(--bg-2));border:1px solid var(--border);border-radius:18px;padding:30px;position:relative;overflow:hidden}
+  .soon .badge{position:absolute;top:16px;right:16px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    background:var(--accent-dim);color:var(--accent-2);padding:4px 10px;border-radius:999px;border:1px solid rgba(217,119,87,.3)}
+  .soon .ic{background:var(--surface)}
+  .soon h3{font-family:var(--serif);font-size:22px;font-weight:600;margin-bottom:8px}
+  .soon p{font-size:14px;color:var(--text-2)}
+
+  /* faq */
+  .faq{max-width:760px;margin:0 auto}
+  details{border-bottom:1px solid var(--border);padding:18px 4px}
+  summary{cursor:pointer;font-weight:600;font-size:16px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--accent);font-size:22px;font-weight:400;transition:.2s}
+  details[open] summary::after{transform:rotate(45deg)}
+  details p{color:var(--text-2);font-size:14.5px;margin-top:12px}
+
+  footer{border-top:1px solid var(--border);padding:44px 0;text-align:center;color:var(--text-3);font-size:13px}
+  footer .brand{justify-content:center;margin-bottom:14px;color:var(--text-1)}
+
+  /* reveal */
+  .rev{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+  .rev.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-in">
+    <div class="brand"><span class="logo">N</span> Nexus <span style="color:var(--text-3);font-weight:500">CLI</span></div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#engines">Engines</a>
+      <a href="#start">Get started</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#updates">Stay updated</a>
+      <a class="btn btn-primary" href="#start">Install</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <span class="pill"><span class="dot"></span> Now in public preview · v1</span>
+    <h1 class="serif">The autonomous agent<br>that lives in your <em>terminal</em></h1>
+    <p class="sub">Nexus CLI is a Claude Code-style agent. Pick a top-tier model, then chat, run
+      multi-step autonomous tasks, and schedule cron jobs — all from one command. No setup, no fuss.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#start">Install in one line</a>
+      <a class="btn btn-ghost" href="https://github.com/mokshasripadr-lab/nexus-ai-agent-CLI-mode-" target="_blank" rel="noopener">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+    <p class="hint" style="margin-top:16px">✦ Sign in with Google on the app to get a daily update on what's new — <a href="#roadmap" class="accent">what's coming</a> soon.</p>
+    <p class="hint" style="margin-top:6px;font-size:11.5px;color:var(--text-3)">By signing in, you'll receive a short daily update email. You can unsubscribe in one click from any email, anytime.</p>
+
+    <div class="install">
+      <div class="tabs">
+        <span class="tab on" data-os="mac">macOS / Linux</span>
+        <span class="tab" data-os="win">Windows</span>
+      </div>
+      <div class="code">
+        <code id="cmd">curl -fsSL https://raw.githubusercontent.com/mokshasripadr-lab/nexus-ai-agent-CLI-mode-/main/install.sh | bash</code>
+        <button class="copy" onclick="copyCmd()">Copy</button>
+      </div>
+      <p class="hint">Then type <code style="font-family:var(--mono);color:var(--mint)">nexus</code> — it asks which model you want and for your API key. Your key stays on your machine.</p>
+    </div>
+
+    <div class="term rev">
+      <div class="term-bar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i>
+        <span style="margin-left:8px;font-family:var(--mono);font-size:11.5px;color:var(--text-3)">nexus — zsh</span></div>
+      <div class="term-body">
+<span class="c-orange">      \  |  /</span>        <span class="c-gold">Nexus CLI</span><br>
+<span class="c-orange">     .-'''-.</span>        <span class="c-grey">your terminal agent</span><br>
+<span class="c-orange">    ( ^   ^ )</span>       <span class="c-grey">powered by top LLMs</span><br>
+<span class="c-orange">     '-. .-'</span>        <span class="c-grey">type /help for commands</span><br>
+<span class="c-orange">      /  |  \</span><br><br>
+<span class="c-grey">Pick an engine:</span><br>
+&nbsp;&nbsp;<span class="c-gold">1</span> Swift — instant answers&nbsp;&nbsp;<span class="c-mint">2</span> NextAgent — code-first&nbsp;&nbsp;<span class="c-vio">3</span> Atlas Deep — reasoning<br><br>
+<span class="c-orange">[Swift] you ›</span> book me a quiet workspace and remind me tomorrow 9am<br>
+<span class="c-mint">✦ nexus</span> planning → researching → drafting → <span class="c-gold">waiting for your approval to book</span> ✓
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <p class="eyebrow rev">Built to actually finish the job</p>
+    <h2 class="h2 serif rev">One command. A whole agent.</h2>
+    <p class="lead rev">Not just a chatbot in your terminal — Nexus plans, acts, verifies, and schedules.</p>
+    <div class="grid g3">
+      <div class="card rev"><div class="ic" style="background:var(--accent-dim);color:var(--accent)">◆</div>
+        <h3>Your choice of top models</h3><p>Pick Gemini 2.5 Pro, Claude Sonnet, or GPT-4o. Paste that provider's key and it becomes your main brain. Switch anytime with <code style="font-family:var(--mono)">/model</code>.</p><span class="tag">/model</span></div>
+      <div class="card rev"><div class="ic" style="background:rgba(127,201,173,.14);color:var(--mint)">⚡</div>
+        <h3>Autonomous crew</h3><p>Give it a goal with <code style="font-family:var(--mono)">/do</code> and a multi-agent crew decomposes it — researches, executes, and prepares real-world actions.</p><span class="tag">/do &lt;task&gt;</span></div>
+      <div class="card rev"><div class="ic" style="background:rgba(168,146,224,.14);color:var(--violet)">⧗</div>
+        <h3>Cron scheduling</h3><p>Say <code style="font-family:var(--mono)">/cron</code> and Nexus schedules the task and installs a background runner so it fires automatically.</p><span class="tag">/cron &lt;task&gt;</span></div>
+      <div class="card rev"><div class="ic" style="background:rgba(122,162,227,.14);color:var(--blue)">↻</div>
+        <h3>Key rotation, no rate limits</h3><p>Add several keys and Nexus rotates to the next when one hits its limit — so you rarely see a quota error.</p><span class="tag">/key</span></div>
+      <div class="card rev"><div class="ic" style="background:rgba(230,185,92,.14);color:var(--gold)">◎</div>
+        <h3>Approval-gated safety</h3><p>Anything that spends money or sends messages stops for your explicit yes. It never books or pays on its own.</p><span class="tag">human-in-the-loop</span></div>
+      <div class="card rev"><div class="ic" style="background:var(--accent-dim);color:var(--accent)">⌂</div>
+        <h3>Private by design</h3><p>Your API key is saved locally to <code style="font-family:var(--mono)">~/.nexus</code> — never bundled with the code, never sent to a database.</p><span class="tag">~/.nexus/config.json</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ENGINES -->
+<section id="engines" style="background:var(--bg-2);border-block:1px solid var(--border)">
+  <div class="wrap">
+    <p class="eyebrow rev">Three engines, one agent</p>
+    <h2 class="h2 serif rev">Pick the right gear for the task</h2>
+    <p class="lead rev">Nexus routes your request to the engine that fits — or you choose with <code style="font-family:var(--mono);font-size:13px">/engine</code>.</p>
+    <div class="grid g3">
+      <div class="eng rev"><span class="k" style="color:var(--gold)">1</span><div><h4>Swift</h4><p>Instant answers in the fewest words. Perfect for quick facts, commands, and one-liners.</p></div></div>
+      <div class="eng rev"><span class="k" style="color:var(--mint)">2</span><div><h4>NextAgent</h4><p>Code-first. Returns working code, one line of approach, and the exact run command.</p></div></div>
+      <div class="eng rev"><span class="k" style="color:var(--violet)">3</span><div><h4>Atlas Deep</h4><p>Careful multi-step reasoning. Thinks rigorously, cites facts, and admits what it can't verify.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- GET STARTED -->
+<section id="start">
+  <div class="wrap">
+    <p class="eyebrow rev">Up and running in a minute</p>
+    <h2 class="h2 serif rev">Get started</h2>
+    <p class="lead rev">Works on macOS, Linux, and Windows.</p>
+    <div style="max-width:720px;margin:0 auto">
+      <div class="step rev"><div class="num">1</div><div><h4>Paste the install command</h4><p>Copy the one-liner up top into your terminal. It downloads the whole agent to <code>~/.nexus/agent</code> and creates a global <code>nexus</code> command.</p></div></div>
+      <div class="step rev"><div class="num">2</div><div><h4>Type <code>nexus</code> and pick a model</h4><p>On first run it lists top LLMs. Choose one and paste that provider's key (free Gemini keys work great to start).</p></div></div>
+      <div class="step rev"><div class="num">3</div><div><h4>Chat, or go autonomous</h4><p>Ask anything, or run <code>/do plan my week and draft the emails</code>. Use <code>/cron</code> to make it recur. That's it.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP / COMING SOON -->
+<section id="roadmap" style="background:var(--bg-2);border-block:1px solid var(--border)">
+  <div class="wrap road">
+    <p class="eyebrow rev">What's next</p>
+    <h2 class="h2 serif rev">The CLI is just the start</h2>
+    <p class="lead rev">Nexus is growing into a full ecosystem. Here's what's coming.</p>
+    <div class="grid g3">
+      <div class="soon rev"><span class="badge">Coming soon</span><div class="ic">🌐</div>
+        <h3>Nexus Web</h3><p>The full agent in your browser — engines, chat, memory, and a live benchmark dashboard. No install needed.</p></div>
+      <div class="soon rev"><span class="badge">In the works</span><div class="ic">⌨️</div>
+        <h3>Nexus IDE</h3><p>An agent-native editor where Nexus reads, writes, and runs your code alongside you — computer-use built in.</p></div>
+      <div class="soon rev"><span class="badge">Beta soon</span><div class="ic">✦</div>
+        <h3>Beta program</h3><p>Early access to new engines, faster models, and pro features. Try things before anyone else and shape what we build.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- STAY UPDATED -->
+<section id="updates" style="background:var(--bg-2);border-block:1px solid var(--border)">
+  <div class="wrap" style="max-width:640px">
+    <p class="eyebrow rev">Stay in the loop</p>
+    <h2 class="h2 serif rev">Get a daily update</h2>
+    <p class="lead rev">Sign in with Google and we'll email you once a day with what shipped and what's coming next. One click to unsubscribe, anytime.</p>
+    <div class="card rev" style="text-align:center;padding:32px">
+      <button id="subBtn" class="btn btn-primary" style="font-size:15px;padding:12px 24px">
+        <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 3-2.2 5.5-4.7 7.2l7.3 5.7C43.8 37.9 46.5 31.8 46.5 24.5z"/><path fill="#FBBC05" d="M10.5 28.4c-.5-1.5-.8-3-.8-4.4s.3-3 .8-4.4l-7.9-6.2C1 16.7 0 20.2 0 24s1 7.3 2.6 10.6l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.3-5.7c-2 1.4-4.7 2.3-8.6 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.2C6.5 42.6 14.6 48 24 48z"/></svg>
+        Sign in with Google to subscribe
+      </button>
+      <p id="subStatus" style="font-size:13.5px;color:var(--text-2);margin-top:14px;min-height:18px"></p>
+      <p style="font-size:11.5px;color:var(--text-3);margin-top:6px">We only use your email for the daily update. Unsubscribe in one click from any email.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <p class="eyebrow rev">Questions</p>
+    <h2 class="h2 serif rev">Good to know</h2>
+    <div class="faq" style="margin-top:34px">
+      <details class="rev"><summary>Is it free?</summary><p>The CLI is free to install and use. You bring your own model key — a free Gemini key from Google AI Studio is enough to get going. You only pay your model provider for what you use.</p></details>
+      <details class="rev"><summary>Which models can I use?</summary><p>Gemini 2.5 Pro, Anthropic Claude (Sonnet), and OpenAI GPT-4o. Pick one on first run and switch anytime with <code style="font-family:var(--mono)">/model</code>.</p></details>
+      <details class="rev"><summary>Where does my API key go?</summary><p>Only to <code style="font-family:var(--mono)">~/.nexus/config.json</code> on your own machine (locked down with file permissions). It's never bundled with the code, pushed to GitHub, or stored in any database.</p></details>
+      <details class="rev"><summary>Can it really book things or send emails?</summary><p>It prepares them — but anything that spends money or sends a message pauses for your explicit approval. Nexus never completes those actions on its own.</p></details>
+      <details class="rev"><summary>Does it work on Windows?</summary><p>Yes. Use the PowerShell command on the install tab. macOS and Linux use the curl one-liner.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand"><span class="logo">N</span> Nexus CLI</div>
+    <p>Built by a student who wanted an agent that actually finishes the job.</p>
+    <p style="margin-top:8px">Web · IDE · Beta — coming soon. &nbsp;·&nbsp; <a href="#start" class="accent">Install the CLI →</a></p>
+    <p style="margin-top:12px;font-size:11.5px;color:var(--text-3)">Sign in for daily updates · unsubscribe anytime via the link in any email.</p>
+  </div>
+</footer>
+
+<script>
+  const CMDS = {
+    mac: "curl -fsSL https://raw.githubusercontent.com/mokshasripadr-lab/nexus-ai-agent-CLI-mode-/main/install.sh | bash",
+    win: "irm https://raw.githubusercontent.com/mokshasripadr-lab/nexus-ai-agent-CLI-mode-/main/install.ps1 | iex"
+  };
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+      t.classList.add('on');
+      document.getElementById('cmd').textContent = CMDS[t.dataset.os];
+    };
+  });
+  function copyCmd(){
+    const txt = document.getElementById('cmd').textContent;
+    navigator.clipboard.writeText(txt).then(()=>{
+      const b=document.querySelector('.copy');const o=b.textContent;
+      b.textContent='Copied ✓';b.style.color='var(--mint)';
+      setTimeout(()=>{b.textContent=o;b.style.color='';},1600);
+    });
+  }
+  // scroll reveal
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+  document.querySelectorAll('.rev').forEach((el,i)=>{el.style.transitionDelay=(i%4*60)+'ms';io.observe(el)});
+</script>
+
+<!-- Firebase: sign in with Google + add to the daily-update list -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCGsJUlT2d-iMymR6XjP4UlbKTPe_fDWac",
+    authDomain: "nexus-ai-56a65.firebaseapp.com",
+    projectId: "nexus-ai-56a65",
+    storageBucket: "nexus-ai-56a65.firebasestorage.app",
+    messagingSenderId: "990290674824",
+    appId: "1:990290674824:web:a09a36ae9f95acb46a0b3d",
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const btn = document.getElementById("subBtn");
+  const status = document.getElementById("subStatus");
+
+  async function subscribe(user) {
+    await setDoc(doc(db, "subscribers", user.uid), {
+      email: user.email, name: user.displayName || "", photoURL: user.photoURL || "",
+      active: true, subscribedAt: serverTimestamp(), lastSeenAt: serverTimestamp(),
+    }, { merge: true });
+  }
+
+  btn.addEventListener("click", async () => {
+    status.textContent = "Opening Google sign-in…";
+    try {
+      const res = await signInWithPopup(auth, new GoogleAuthProvider());
+      await subscribe(res.user);
+      const who = res.user.displayName || res.user.email;
+      status.innerHTML = "✓ You're subscribed, <strong>" + who + "</strong> — daily updates are on their way.";
+      btn.style.display = "none";
+    } catch (e) {
+      status.textContent = "Sign-in didn't complete: " + (e && e.message ? e.message : e);
+    }
+  });
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) { btn.textContent = "Subscribe as " + (user.displayName || user.email); }
+  });
+</script>
+</body>
+</html>
