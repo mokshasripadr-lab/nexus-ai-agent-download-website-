@@ -1,7 +1,7 @@
 // Daily update email — Vercel serverless function.
 // Triggered daily by Vercel Cron (see vercel.json). It reads today's commits
 // from the public GitHub repo, reads the subscriber list from Firestore, and
-// emails everyone via Resend with a personal one-click unsubscribe link.
+// emails everyone via Brevo with a personal one-click unsubscribe link.
 //
 // Env vars: CRON_SECRET, FIREBASE_SERVICE_ACCOUNT, BREVO_API_KEY, SENDER_EMAIL,
 // optional SENDER_NAME, APP_URL, GITHUB_TOKEN.
