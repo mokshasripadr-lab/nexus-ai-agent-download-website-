@@ -81,7 +81,7 @@ function buildHtml(commits, dateStr, unsub) {
   </div></body></html>`;
 }
 
-export default async function handler(req, res) {
+export default async function handler(req, res) { res.setHeader("Cache-Control", "no-store, max-age=0");
   const secret = process.env.CRON_SECRET;
   const hdr = req.headers.authorization || "";
   const qkey = (req.query && req.query.key) || "";
