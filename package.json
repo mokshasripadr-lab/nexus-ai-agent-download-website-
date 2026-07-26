@@ -1,0 +1,10 @@
+{
+  "name": "nexus-ai-download-website",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Nexus AI download landing page + daily-update email backend",
+  "dependencies": {
+    "firebase-admin": "^13.0.0"
+  }
+}
